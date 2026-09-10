@@ -63,7 +63,7 @@ The CLI encrypts OAuth tokens at rest in `~/.config/xero-command-line/tokens.jso
 
 1. **OS keychain (default in `auto` mode)** — macOS Keychain, Windows Credential Manager, or Linux Secret Service (GNOME Keyring / KWallet via D-Bus). Recommended on desktop systems. No encryption key file is written unless you opt in below.
 2. **`XERO_TOKEN_PASSPHRASE`** — Derives the key with scrypt from your passphrase and a local salt file. The raw key is not stored on disk. Set the same value before `xero login` and every later command. Stronger than a file-stored key if you accept managing a secret env var.
-3. **`XERO_KEYRING_FILE_BACKUP=1` (opt-in)** — When the keychain accepts a new key, also writes a copy to `~/.config/xero-command-line/.encryption-key` (mode `0600`). If a later command cannot read the keychain (common on **WSL**, **SSH**, or **headless** Linux), the CLI reads this file instead. **Off by default** so macOS/Windows/Linux desktops keep the key keychain-only. Enable only when the keychain is installed but reads are unreliable.
+3. **`XERO_KEYRING_FILE_BACKUP=1` (opt-in)**: In `auto` mode, writes a copy to `~/.config/xero-command-line/.encryption-key` (mode `0600`) whether the keychain accepts or rejects a new key. If a later command cannot read the keychain (common on **WSL**, **SSH**, or **headless** Linux), the CLI reads this file instead. **Off by default** so desktops keep the key keychain-only. This setting does not enable file fallback in `keyring` mode.
 4. **`XERO_KEY_STORAGE=file`** — Store the key only in `.encryption-key` (skip the keychain). Use when no secret service is available; weaker than keychain-only because any process running as your user can read the key file.
 
 | Variable | Values | Default |
@@ -72,7 +72,7 @@ The CLI encrypts OAuth tokens at rest in `~/.config/xero-command-line/tokens.jso
 | `XERO_KEYRING_FILE_BACKUP` | `1`, `true`, `yes` | off |
 | `XERO_TOKEN_PASSPHRASE` | your passphrase | off |
 
-In `auto` mode without file backup, if the keychain is completely unavailable at login, the CLI still writes `.encryption-key` once so login can succeed — same as a file-only fallback for that session.
+In `auto` mode without file backup, login fails if the keychain cannot store a new key. Before logging in without a working keychain, set `XERO_KEY_STORAGE=file`, enable file backup in `auto` mode, or configure `XERO_TOKEN_PASSPHRASE`. `keyring` mode requires a working keychain.
 
 On Linux, WSL, or SSH, if login works once and later commands fail with an encryption-key error, the secret service was likely unavailable in that shell. The CLI does **not** delete `tokens.json` on decrypt errors.
 
