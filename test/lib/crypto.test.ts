@@ -16,11 +16,13 @@ vi.mock('node:os', async () => {
 vi.mock('@napi-rs/keyring', () => ({
   Entry: class MockEntry {
     static store: string | null = null
+    static failWrites = false
     constructor(_service: string, _account: string) {}
     getPassword() {
       return MockEntry.store
     }
     setPassword(value: string) {
+      if (MockEntry.failWrites) throw new Error('Synthetic keyring unavailable')
       MockEntry.store = value
     }
     deletePassword() {
@@ -52,6 +54,7 @@ describe('crypto key storage', () => {
     mkdirSync(CONFIG_DIR, {recursive: true})
     const {Entry} = await import('@napi-rs/keyring')
     Entry.store = null
+    Entry.failWrites = false
   })
 
   afterEach(() => {
@@ -121,5 +124,30 @@ describe('crypto key storage', () => {
     const {Entry} = await import('@napi-rs/keyring')
     expect(Entry.store).toBeNull()
     expect(readFileSync(FILE_KEY_PATH, 'utf-8').length).toBeGreaterThan(0)
+  })
+
+  it.each([
+    ['auto', undefined],
+    ['keyring', undefined],
+    ['keyring', '1'],
+  ])('refuses a failed keyring write in %s mode with backup %s', async (mode, backup) => {
+    process.env[KEY_STORAGE_ENV] = mode
+    if (backup) process.env[FILE_BACKUP_ENV] = backup
+    const {Entry} = await import('@napi-rs/keyring')
+    Entry.failWrites = true
+    await expect(getOrCreateKey()).rejects.toBeInstanceOf(EncryptionKeyError)
+    expect(existsSync(FILE_KEY_PATH)).toBe(false)
+  })
+
+  it.each(['auto', 'file'])('reloads an allowed file fallback in %s mode after caching tokens', async (mode) => {
+    process.env[KEY_STORAGE_ENV] = mode
+    process.env[FILE_BACKUP_ENV] = '1'
+    const {Entry} = await import('@napi-rs/keyring')
+    Entry.failWrites = true
+    const first = await getOrCreateKey()
+    const ciphertext = encrypt('synthetic token', first)
+    writeFileSync(TOKEN_PATH, JSON.stringify({test: ciphertext}))
+    const second = await getOrCreateKey()
+    expect(decrypt(ciphertext, second)).toBe('synthetic token')
   })
 })

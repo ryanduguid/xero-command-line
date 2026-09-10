@@ -179,8 +179,7 @@ async function persistNewKey(key: Buffer, mode: KeyStorageMode): Promise<void> {
   let fileOk = false
   if (mode === 'file') {
     fileOk = writeFileKey(encoded)
-  } else if (!keyringOk) {
-    // Keychain unavailable — persist to file so login can succeed in auto mode
+  } else if (!keyringOk && mode === 'auto' && isFileBackupEnabled()) {
     fileOk = writeFileKey(encoded)
   }
 

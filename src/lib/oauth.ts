@@ -93,19 +93,19 @@ function waitForCallback(expectedState: string): Promise<string> {
       const state = url.searchParams.get('state')
       const error = url.searchParams.get('error')
 
-      if (error) {
-        const desc = url.searchParams.get('error_description') ?? error
-        res.writeHead(200, {'Content-Type': 'text/html'})
-        res.end(`<html><body><h1>Authentication Failed</h1><p>${desc}</p><p>You can close this window.</p></body></html>`)
-        clearTimeout(timeout)
-        server.close()
-        reject(new Error(`OAuth error: ${desc}`))
+      if (state !== expectedState || (!code && !error)) {
+        res.writeHead(400, {'Content-Type': 'text/html'})
+        res.end('<html><body><h1>Invalid Request</h1><p>Missing code or state mismatch.</p></body></html>')
         return
       }
 
-      if (!code || state !== expectedState) {
-        res.writeHead(400, {'Content-Type': 'text/html'})
-        res.end('<html><body><h1>Invalid Request</h1><p>Missing code or state mismatch.</p></body></html>')
+      if (error) {
+        const desc = url.searchParams.get('error_description') ?? error
+        res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
+        res.end(`Authentication failed: ${desc}\nYou can close this window.`)
+        clearTimeout(timeout)
+        server.close()
+        reject(new Error(`OAuth error: ${desc}`))
         return
       }
 
@@ -113,7 +113,7 @@ function waitForCallback(expectedState: string): Promise<string> {
       res.end('<html><body><h1>Success!</h1><p>You are now logged in. You can close this window.</p></body></html>')
       clearTimeout(timeout)
       server.close()
-      resolve(code)
+      resolve(code!)
     })
 
     server.listen(8742, '127.0.0.1', () => {
