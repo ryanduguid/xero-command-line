@@ -6,6 +6,15 @@ import {getClientHeaders} from './get-client-headers.js'
 
 export {clearCachedToken}
 
+function reportRefreshFailure(profileName: string, error: unknown): never {
+  if (error instanceof EncryptionKeyError) throw error
+  if (error instanceof Error && 'invalidRefreshToken' in error && error.invalidRefreshToken === true) {
+    clearCachedToken(profileName)
+    throw new Error('Session expired. Run "xero login" to re-authenticate.')
+  }
+  throw sanitizeApiError(error instanceof Error ? error : new Error(String(error)))
+}
+
 export async function createXeroClient(
   profileName: string,
   clientId: string,
@@ -24,9 +33,8 @@ export async function createXeroClient(
       const newTokenSet = await refreshAccessToken(clientId, cached.refreshToken)
       await cacheTokenSet(profileName, newTokenSet, cached.tenantId, cached.tenantName)
       accessToken = newTokenSet.access_token
-    } catch {
-      clearCachedToken(profileName)
-      throw new Error(`Session expired. Run "xero login" to re-authenticate.`)
+    } catch (error) {
+      reportRefreshFailure(profileName, error)
     }
   }
 
@@ -68,9 +76,8 @@ export async function withRetry<T>(
             const newTokenSet = await refreshAccessToken(clientId, cached.refreshToken)
             await cacheTokenSet(profileName, newTokenSet, cached.tenantId, cached.tenantName)
             continue
-          } catch {
-            clearCachedToken(profileName)
-            throw new Error(`Session expired. Run "xero login" to re-authenticate.`)
+          } catch (error) {
+            reportRefreshFailure(profileName, error)
           }
         }
         clearCachedToken(profileName)
@@ -121,11 +128,16 @@ export function parseXeroError(error: Error): ParsedXeroError {
   return {statusCode, parsed: obj}
 }
 
+function redactSensitiveText(message: string): string {
+  return message
+    .replace(/\b(?:authorization|proxy-authorization|set-cookie|cookie|access_token|refresh_token|client_secret)\b["']?\s*[:=]\s*(?:"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^\r\n,}]*)/gi, '[redacted]')
+    .replace(/\bBearer\s+[^\s,}"']+/gi, '[redacted]')
+}
+
 export function sanitizeApiError(error: Error, hint?: ParsedXeroError): Error {
   const {statusCode, parsed} = hint ?? parseXeroError(error)
 
-  // Non-Xero error (network, our own thrown messages, etc.) — pass through.
-  if (!parsed) return new Error(error.message)
+  if (!parsed) return new Error(redactSensitiveText(error.message))
 
   try {
     const response = parsed.response as Record<string, unknown> | undefined
@@ -140,13 +152,13 @@ export function sanitizeApiError(error: Error, hint?: ParsedXeroError): Error {
           .map(ve => ve.Message)
           .filter((m): m is string => Boolean(m))
         if (messages.length) {
-          return new Error(`Xero API error${statusSuffix}: ${messages.join('; ')}`)
+          return new Error(redactSensitiveText(`Xero API error${statusSuffix}: ${messages.join('; ')}`))
         }
       }
 
       const topMessage = body.Message ?? body.message
       if (typeof topMessage === 'string' && topMessage) {
-        return new Error(`Xero API error${statusSuffix}: ${topMessage}`)
+        return new Error(redactSensitiveText(`Xero API error${statusSuffix}: ${topMessage}`))
       }
     }
 

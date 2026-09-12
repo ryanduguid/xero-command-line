@@ -19,7 +19,7 @@ export default class TrackingOptionsCreate extends BaseCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(TrackingOptionsCreate)
 
-    const optionNames = flags.names.split(',').map(n => n.trim())
+    const optionNames = flags.names.split(',').map(n => n.trim()).filter(Boolean)
 
     const parsed = trackingOptionsCreateSchema.safeParse({
       trackingCategoryId: flags['category-id'],

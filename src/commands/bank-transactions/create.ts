@@ -48,6 +48,10 @@ export default class BankTransactionsCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        const row = result as Record<string, unknown> | undefined
+        const data = row ? {...row, ...(shortCode && row.bankTransactionID ? {url: bankTransactionDeepLink(shortCode, String(row.bankTransactionID))} : {})} : undefined
+        this.outputFormatted(data ? [data] : [], data ? Object.keys(data).map(key => ({key, header: key})) : [], flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Bank transaction created: ${r?.bankTransactionID}`)
@@ -101,6 +105,10 @@ export default class BankTransactionsCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        const row = result as Record<string, unknown> | undefined
+        const data = row ? {...row, ...(shortCode && row.bankTransactionID ? {url: bankTransactionDeepLink(shortCode, String(row.bankTransactionID))} : {})} : undefined
+        this.outputFormatted(data ? [data] : [], data ? Object.keys(data).map(key => ({key, header: key})) : [], flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Bank transaction created: ${r?.bankTransactionID}`)

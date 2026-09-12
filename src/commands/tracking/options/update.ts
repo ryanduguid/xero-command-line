@@ -20,6 +20,9 @@ export default class TrackingOptionsUpdate extends BaseCommand {
     const {flags} = await this.parse(TrackingOptionsUpdate)
 
     const fileData = this.readJsonFile(flags.file) as Record<string, unknown>
+    if (!fileData || typeof fileData !== 'object' || Array.isArray(fileData)) {
+      this.error('Validation errors: expected an object with tracking category and options')
+    }
     if (flags['category-id']) {
       fileData.trackingCategoryId = flags['category-id']
     }

@@ -24,9 +24,11 @@ function ensureConfigDir(): void {
 function readConfig(): ConfigFile {
   ensureConfigDir()
   if (!existsSync(CONFIG_PATH)) {
-    return {profiles: {}}
+    return {profiles: Object.create(null)}
   }
-  return JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) as ConfigFile
+  const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf-8')) as ConfigFile
+  config.profiles = Object.assign(Object.create(null), config.profiles)
+  return config
 }
 
 function writeConfig(config: ConfigFile): void {
@@ -69,7 +71,7 @@ export function listProfiles(): {profiles: Profile[]; defaultProfile?: string} {
 
 export function setDefaultProfile(name: string): void {
   const config = readConfig()
-  if (!config.profiles[name]) {
+  if (!Object.hasOwn(config.profiles, name)) {
     throw new Error(`Profile "${name}" not found. Run "xero profile add ${name}" first.`)
   }
   config.defaultProfile = name
@@ -84,7 +86,7 @@ export function getDefaultProfile(): string | undefined {
 export function getProfileClientId(name: string): string {
   const config = readConfig()
   const profile = config.profiles[name]
-  if (!profile) {
+  if (!Object.hasOwn(config.profiles, name)) {
     throw new Error(`Profile "${name}" not found. Run "xero profile list" to see available profiles.`)
   }
 
@@ -93,5 +95,5 @@ export function getProfileClientId(name: string): string {
 
 export function profileExists(name: string): boolean {
   const config = readConfig()
-  return name in config.profiles
+  return Object.hasOwn(config.profiles, name)
 }

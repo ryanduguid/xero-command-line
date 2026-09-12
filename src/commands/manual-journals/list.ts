@@ -21,6 +21,12 @@ export default class ManualJournalsList extends BaseCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(ManualJournalsList)
 
+    const value = flags['modified-after']
+    const modifiedAfter = value ? new Date(value) : undefined
+    if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(modifiedAfter!.getTime()) || modifiedAfter!.toISOString().slice(0, 10) !== value)) {
+      this.error('--modified-after must be a valid date in YYYY-MM-DD format')
+    }
+
     const result = await this.xeroCall(flags, async (xero, tenantId) => {
       if (flags['manual-journal-id']) {
         const response = await xero.accountingApi.getManualJournal(tenantId, flags['manual-journal-id'])
@@ -29,7 +35,7 @@ export default class ManualJournalsList extends BaseCommand {
       }
       const response = await xero.accountingApi.getManualJournals(
         tenantId,
-        flags['modified-after'] ? new Date(flags['modified-after']) : undefined,
+        modifiedAfter,
         undefined,
         undefined,
         flags.page,

@@ -1,3 +1,4 @@
+import {filterGuid, filterString} from '../../lib/filters.js'
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
 import {formatOutput, formatStatus, formatCurrency, formatDate} from '../../lib/formatters.js'
@@ -46,11 +47,11 @@ export default class CreditNotesList extends BaseCommand {
     const result = await this.xeroCall(flags, async (xero, tenantId) => {
       const whereClauses: string[] = []
       if (flags['contact-id']) {
-        whereClauses.push(`Contact.ContactID=guid("${flags['contact-id']}")`)
+        whereClauses.push(`Contact.ContactID=${filterGuid(flags['contact-id'], 'contact-id')}`)
       }
 
       if (flags['credit-note-number']) {
-        whereClauses.push(`CreditNoteNumber="${flags['credit-note-number']}"`)
+        whereClauses.push(`CreditNoteNumber=${filterString(flags['credit-note-number'])}`)
       }
 
       const where = whereClauses.length > 0 ? whereClauses.join(' AND ') : undefined
