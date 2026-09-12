@@ -1,3 +1,4 @@
+import {filterGuid} from '../../lib/filters.js'
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
 import {formatOutput, formatStatus, formatCurrency, formatDate} from '../../lib/formatters.js'
@@ -45,11 +46,11 @@ export default class BankTransactionsList extends BaseCommand {
     const result = await this.xeroCall(flags, async (xero, tenantId) => {
       const whereClauses: string[] = []
       if (flags['bank-account-id']) {
-        whereClauses.push(`BankAccount.AccountID=guid("${flags['bank-account-id']}")`)
+        whereClauses.push(`BankAccount.AccountID=${filterGuid(flags['bank-account-id'], 'bank-account-id')}`)
       }
 
       if (flags['bank-transaction-id']) {
-        whereClauses.push(`BankTransactionID=guid("${flags['bank-transaction-id']}")`)
+        whereClauses.push(`BankTransactionID=${filterGuid(flags['bank-transaction-id'], 'bank-transaction-id')}`)
       }
 
       const where = whereClauses.length > 0 ? whereClauses.join(' AND ') : undefined
@@ -65,7 +66,7 @@ export default class BankTransactionsList extends BaseCommand {
 
     const transactions = result as unknown as Record<string, unknown>[]
 
-    if (hasTransactionId && !flags.json) {
+    if (hasTransactionId && !flags.json && !flags.toon) {
       if (flags.csv) {
         const mergedColumns = [
           ...this.transactionColumns,

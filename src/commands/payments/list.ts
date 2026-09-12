@@ -1,3 +1,4 @@
+import {filterGuid, filterString} from '../../lib/filters.js'
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
 import {formatCurrency, formatDate} from '../../lib/formatters.js'
@@ -32,13 +33,13 @@ export default class PaymentsList extends BaseCommand {
 
       const whereClauses: string[] = []
       if (flags['invoice-id']) {
-        whereClauses.push(`Invoice.InvoiceID=guid("${flags['invoice-id']}")`)
+        whereClauses.push(`Invoice.InvoiceID=${filterGuid(flags['invoice-id'], 'invoice-id')}`)
       }
       if (flags['invoice-number']) {
-        whereClauses.push(`Invoice.InvoiceNumber="${flags['invoice-number']}"`)
+        whereClauses.push(`Invoice.InvoiceNumber=${filterString(flags['invoice-number'])}`)
       }
       if (flags.reference) {
-        whereClauses.push(`Reference="${flags.reference}"`)
+        whereClauses.push(`Reference=${filterString(flags.reference)}`)
       }
       const where = whereClauses.length > 0 ? whereClauses.join(' AND ') : undefined
 

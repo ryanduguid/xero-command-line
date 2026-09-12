@@ -42,6 +42,9 @@ export default class AccountsUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        const row = result as Record<string, unknown> | undefined
+        this.outputFormatted(row ? [row] : [], row ? Object.keys(row).map(key => ({key, header: key})) : [], flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Account updated: ${r?.name} (${r?.accountID})`)
@@ -78,6 +81,9 @@ export default class AccountsUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        const row = result as Record<string, unknown> | undefined
+        this.outputFormatted(row ? [row] : [], row ? Object.keys(row).map(key => ({key, header: key})) : [], flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Account updated: ${r?.name} (${r?.accountID})`)

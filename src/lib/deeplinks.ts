@@ -1,20 +1,17 @@
 export const contactDeepLink = (shortCode: string, contactId: string) =>
-  `https://go.xero.com/app/${shortCode}/contacts/contact/${contactId}`
+  `https://go.xero.com/app/${encodeURIComponent(shortCode)}/contacts/contact/${encodeURIComponent(contactId)}`
 
 export const invoiceDeepLink = (shortCode: string, invoiceId: string) =>
-  `https://go.xero.com/app/${shortCode}/invoicing/view/${invoiceId}`
+  `https://go.xero.com/app/${encodeURIComponent(shortCode)}/invoicing/view/${encodeURIComponent(invoiceId)}`
 
 export const billDeepLink = (shortCode: string, billId: string) =>
-  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${shortCode}&redirecturl=/AccountsPayable/Edit.aspx?InvoiceID=${billId}`
+  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${encodeURIComponent(shortCode)}&redirecturl=${encodeURIComponent(`/AccountsPayable/Edit.aspx?InvoiceID=${encodeURIComponent(billId)}`)}`
 
 export const creditNoteDeepLink = (shortCode: string, creditNoteId: string) =>
-  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${shortCode}&redirecturl=/AccountsPayable/ViewCreditNote.aspx?creditNoteID=${creditNoteId}`
+  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${encodeURIComponent(shortCode)}&redirecturl=${encodeURIComponent(`/AccountsPayable/ViewCreditNote.aspx?creditNoteID=${encodeURIComponent(creditNoteId)}`)}`
 
 export const quoteDeepLink = (shortCode: string, quoteId: string) =>
-  `https://go.xero.com/app/${shortCode}/quotes/view/${quoteId}`
-
-export const paymentDeepLink = (shortCode: string, paymentId: string) =>
-  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${shortCode}&redirecturl=/Bank/ViewTransaction.aspx?bankTransactionID=${paymentId}`
+  `https://go.xero.com/app/${encodeURIComponent(shortCode)}/quotes/view/${encodeURIComponent(quoteId)}`
 
 export const bankTransactionDeepLink = (shortCode: string, bankTransactionId: string) =>
-  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${shortCode}&redirecturl=/Bank/ViewTransaction.aspx?bankTransactionID=${bankTransactionId}`
+  `https://go.xero.com/organisationlogin/default.aspx?shortcode=${encodeURIComponent(shortCode)}&redirecturl=${encodeURIComponent(`/Bank/ViewTransaction.aspx?bankTransactionID=${encodeURIComponent(bankTransactionId)}`)}`

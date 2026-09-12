@@ -73,8 +73,8 @@ describe('auth token cache', () => {
       expect(entry?.accessToken).toBe('token-b')
     })
 
-    it('does not cache if no access_token', async () => {
-      await cacheTokenSet('empty', {}, 'tenant-x')
+    it.each([{}, {access_token: 'synthetic'}, {refresh_token: 'synthetic'}])('refuses an incomplete token set', async tokenSet => {
+      await expect(cacheTokenSet('empty', tokenSet, 'tenant-x')).rejects.toThrow('both access_token and refresh_token')
       expect(await getCachedTokenSet('empty')).toBeNull()
     })
   })

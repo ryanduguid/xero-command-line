@@ -27,6 +27,16 @@ describe('profiles', () => {
   })
 
   describe('addProfile', () => {
+    it.each(['constructor', '__proto__', 'toString'])('treats %s as an ordinary profile name', name => {
+      expect(profileExists(name)).toBe(false)
+      expect(() => getProfileClientId(name)).toThrow('not found')
+      addProfile(name, 'synthetic-client')
+      expect(getProfileClientId(name)).toBe('synthetic-client')
+      setDefaultProfile(name)
+      expect(getDefaultProfile()).toBe(name)
+      removeProfile(name)
+      expect(profileExists(name)).toBe(false)
+    })
     it('creates a new profile', () => {
       addProfile('test-profile', 'client-id-123')
 

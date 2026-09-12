@@ -14,6 +14,15 @@ function leakAssertions(message: string): void {
 }
 
 describe('sanitizeApiError', () => {
+  it.each([
+    'Authorization: Bearer synthetic-secret',
+    'failed with Bearer synthetic-secret',
+    'set-cookie: synthetic-secret; Path=/',
+    '{"authorization":"Bearer synthetic-secret',
+    'refresh_token=synthetic-secret',
+  ])('redacts sensitive fallback text: %s', message => {
+    expect(sanitizeApiError(new Error(message)).message).not.toContain('synthetic-secret')
+  })
   it('extracts validation messages and strips bearer token + headers', () => {
     // Shape mirrors xero-node's ApiError.generateError(): top-level `body`
     // and `response.body` reference the same parsed payload.

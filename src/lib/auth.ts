@@ -1,4 +1,4 @@
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
+import {chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {encrypt, decrypt, getOrCreateKey, CONFIG_DIR, EncryptionKeyError} from './crypto.js'
 
@@ -46,6 +46,7 @@ function readTokenCache(): TokenCache {
 function writeTokenCache(cache: TokenCache): void {
   ensureConfigDir()
   writeFileSync(TOKEN_PATH, JSON.stringify(cache, null, 2), {mode: 0o600})
+  chmodSync(TOKEN_PATH, 0o600)
 }
 
 export async function getCachedTokenSet(profileName: string): Promise<TokenEntry | null> {
@@ -82,7 +83,7 @@ export async function cacheTokenSet(
 ): Promise<void> {
   const accessToken = tokenSet.access_token
   const refreshToken = tokenSet.refresh_token
-  if (!accessToken || !refreshToken) return
+  if (!accessToken || !refreshToken) throw new Error('Token response must contain both access_token and refresh_token')
 
   let expiresAt: number
   if (tokenSet.expires_at) {

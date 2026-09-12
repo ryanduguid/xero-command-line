@@ -224,7 +224,11 @@ export async function refreshAccessToken(
 
   if (!response.ok) {
     const text = await response.text()
-    throw new Error(`Token refresh failed (${response.status}): ${text}`)
+    let code: unknown
+    try { code = JSON.parse(text).error } catch { /* The endpoint may return a non-JSON outage response. */ }
+    throw Object.assign(new Error(`Token refresh failed (${response.status})`), {
+      invalidRefreshToken: response.status === 400 && code === 'invalid_grant',
+    })
   }
 
   return response.json() as Promise<TokenSet>

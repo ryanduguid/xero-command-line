@@ -1,7 +1,7 @@
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
 import {paymentCreateSchema, paymentFileCreateSchema, formatZodError} from '../../lib/validators.js'
-import {paymentDeepLink} from '../../lib/deeplinks.js'
+import {invoiceDeepLink, billDeepLink} from '../../lib/deeplinks.js'
 import {ensureInvoiceNested, ensureAccountNested} from '../../lib/file-data.js'
 import type {Payment} from 'xero-node'
 
@@ -46,8 +46,10 @@ export default class PaymentsCreate extends BaseCommand {
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Payment created: ${r?.paymentID}`)
-        if (shortCode && r?.paymentID) {
-          this.log(`View in Xero: ${paymentDeepLink(shortCode, r.paymentID as string)}`)
+        const invoice = r?.invoice as {invoiceID?: string; type?: string} | undefined
+        if (shortCode && invoice?.invoiceID && ['ACCREC', 'ACCPAY'].includes(invoice.type ?? '')) {
+          const link = invoice.type === 'ACCPAY' ? billDeepLink : invoiceDeepLink
+          this.log(`View invoice in Xero: ${link(shortCode, invoice.invoiceID)}`)
         }
       }
     } else {
@@ -83,8 +85,10 @@ export default class PaymentsCreate extends BaseCommand {
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Payment created: ${r?.paymentID}`)
-        if (shortCode && r?.paymentID) {
-          this.log(`View in Xero: ${paymentDeepLink(shortCode, r.paymentID as string)}`)
+        const invoice = r?.invoice as {invoiceID?: string; type?: string} | undefined
+        if (shortCode && invoice?.invoiceID && ['ACCREC', 'ACCPAY'].includes(invoice.type ?? '')) {
+          const link = invoice.type === 'ACCPAY' ? billDeepLink : invoiceDeepLink
+          this.log(`View invoice in Xero: ${link(shortCode, invoice.invoiceID)}`)
         }
       }
     }
