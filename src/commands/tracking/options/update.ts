@@ -54,6 +54,8 @@ export default class TrackingOptionsUpdate extends BaseCommand {
 
     if (flags.json) {
       this.log(JSON.stringify(results, null, 2))
+    } else if (flags.csv || flags.toon) {
+      this.outputResourceRow(results, flags)
     } else {
       this.log(`Updated ${results.length} tracking option(s).`)
     }

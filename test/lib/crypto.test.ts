@@ -150,4 +150,24 @@ describe('crypto key storage', () => {
     const second = await getOrCreateKey()
     expect(decrypt(ciphertext, second)).toBe('synthetic token')
   })
+  // F123: turning the backup on after an earlier login must create the backup,
+  // so the documented recovery from a lost keychain entry works.
+  it('writes the file backup when the option is enabled after an earlier login', async () => {
+    const first = await getOrCreateKey()
+    expect(existsSync(FILE_KEY_PATH)).toBe(false)
+
+    const ciphertext = encrypt('synthetic token', first)
+    writeFileSync(TOKEN_PATH, JSON.stringify({test: ciphertext}))
+
+    process.env[FILE_BACKUP_ENV] = '1'
+    const second = await getOrCreateKey()
+    expect(second.equals(first)).toBe(true)
+    expect(existsSync(FILE_KEY_PATH)).toBe(true)
+
+    // Losing the keychain entry no longer loses the cached tokens.
+    const {Entry} = await import('@napi-rs/keyring')
+    Entry.store = null
+    const recovered = await getOrCreateKey()
+    expect(decrypt(ciphertext, recovered)).toBe('synthetic token')
+  })
 })

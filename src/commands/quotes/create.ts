@@ -48,6 +48,8 @@ export default class QuotesCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Quote created: ${r?.quoteNumber} (${r?.quoteID})`)
@@ -104,6 +106,8 @@ export default class QuotesCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Quote created: ${r?.quoteNumber} (${r?.quoteID})`)

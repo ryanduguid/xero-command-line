@@ -140,7 +140,7 @@ xero items list                       # find item codes
 
 ## JSON file input
 
-Any create or update command accepts `--file <path.json>` instead of inline flags. Use this for multi-line-item resources. All inputs are validated before being sent to the API.
+Any create or update command accepts `--file <path.json>` instead of inline flags, including the tracking category and tracking option commands. Inline flags override matching fields from the file. Use a file for multi-line-item resources. All inputs are validated before being sent to the API.
 
 ```bash
 xero invoices create --file invoice.json
@@ -264,7 +264,7 @@ Example journal.json:
 ```json
 {
   "narration": "Reclassify office supplies",
-  "manualJournalLines": [
+  "journalLines": [
     { "accountCode": "200", "lineAmount": 100, "description": "Debit" },
     { "accountCode": "400", "lineAmount": -100, "description": "Credit" }
   ]
@@ -303,7 +303,6 @@ xero payments create --file payment.json
 
 ```bash
 xero items list
-xero items list --page 2
 
 xero items create --code WIDGET --name "Widget" --sale-price 29.99
 xero items create --file item.json
@@ -362,7 +361,7 @@ xero reports profit-and-loss --timeframe QUARTER --periods 4
 # Balance sheet
 xero reports balance-sheet
 xero reports balance-sheet --date 2025-12-31
-xero reports balance-sheet --timeframe MONTH --periods 12
+xero reports balance-sheet --timeframe MONTH --periods 11
 
 # Aged receivables (requires contact ID)
 xero reports aged-receivables --contact-id <ID>
@@ -376,7 +375,7 @@ xero reports aged-payables --contact-id <ID> --from-date 2025-01-01 --to-date 20
 ## Tips
 
 - Use `--json` and pipe to `jq` when you need to extract specific fields programmatically.
-- Only draft invoices, quotes, and credit notes can be updated.
+- Update rules differ by resource. Xero allows a limited set of fields on approved and paid invoices, allows all fields on a SENT quote, and restricts credit note edits once the credit note is approved. Check the Xero documentation for the resource before assuming a record is locked.
 - For multi-line-item creates, always use `--file` with a JSON payload.
 - Tax types vary by region. Run `xero tax-rates list` to see what's available.
 - Account codes are needed for line items. Run `xero accounts list` to find them.

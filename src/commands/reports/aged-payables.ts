@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
-import {formatCurrency, formatDate} from '../../lib/formatters.js'
+import {extractAgedReport} from '../../lib/report-rows.js'
 
 export default class ReportsAgedPayables extends BaseCommand {
   static override description = 'Generate aged payables report for a contact'
@@ -43,43 +43,12 @@ export default class ReportsAgedPayables extends BaseCommand {
       return
     }
 
-    this.log(`\n${report.reportName as string}`)
-    this.log('')
-
-    const rows = this.extractReportRows(report)
-    this.outputFormatted(
-      rows,
-      [
-        {key: 'date', header: 'Date', format: (v) => formatDate(v)},
-        {key: 'reference', header: 'Reference'},
-        {key: 'due', header: 'Due', format: (v) => v ? formatCurrency(v) : ''},
-        {key: 'paid', header: 'Paid', format: (v) => v ? formatCurrency(v) : ''},
-        {key: 'credited', header: 'Credited', format: (v) => v ? formatCurrency(v) : ''},
-      ],
-      {csv: flags.csv},
-    )
-  }
-
-  private extractReportRows(report: Record<string, unknown>): Record<string, unknown>[] {
-    const rows: Record<string, unknown>[] = []
-    const sections = (report.rows ?? []) as Array<Record<string, unknown>>
-
-    for (const section of sections) {
-      const sectionRows = (section.rows ?? []) as Array<Record<string, unknown>>
-      for (const row of sectionRows) {
-        const cells = (row.cells ?? []) as Array<Record<string, unknown>>
-        if (cells.length >= 5) {
-          rows.push({
-            date: cells[0]?.value,
-            reference: cells[1]?.value,
-            due: cells[2]?.value,
-            paid: cells[3]?.value,
-            credited: cells[4]?.value,
-          })
-        }
-      }
+    if (!flags.csv && !flags.toon) {
+      this.log(`\n${report.reportName as string}`)
+      this.log('')
     }
 
-    return rows
+    const {columns, rows} = extractAgedReport(report)
+    this.outputFormatted(rows, columns, flags)
   }
 }

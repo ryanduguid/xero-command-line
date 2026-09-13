@@ -43,6 +43,8 @@ export default class PaymentsCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Payment created: ${r?.paymentID}`)
@@ -82,6 +84,8 @@ export default class PaymentsCreate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Payment created: ${r?.paymentID}`)

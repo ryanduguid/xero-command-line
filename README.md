@@ -10,6 +10,8 @@ A command-line tool for the Xero API using PKCE OAuth. Authenticates via browser
 npm install -g @xeroapi/xero-command-line
 ```
 
+`@xeroapi/xero-command-line` on npm is the upstream release (0.0.7). It does not carry the changes in this fork. In the published 0.0.7, `--standard-layout` selects cash transactions and `--payments-only` selects the standard layout in both the balance sheet and the profit and loss, and the stricter key storage fallback and OAuth error handling are absent. To get the corrected behaviour, install from source (below) rather than from npm.
+
 Or try it without installing:
 
 ```bash
@@ -135,6 +137,8 @@ Every command that calls the Xero API supports:
 | `--json` | Output raw JSON (for piping/scripting) |
 | `--csv` | Output as CSV |
 | `--toon` | Output as [TOON](https://github.com/toon-format/toon) (compact, LLM-friendly) |
+
+Create and update commands print a short confirmation by default; `--json`, `--csv` and `--toon` return the created or updated record instead. Report commands render the report's own columns, including comparison and year-to-date columns, and their CSV and TOON output starts at the column header with no report title lines above it.
 
 Environment variables `XERO_PROFILE` and `XERO_CLIENT_ID` are also supported. Token storage can be tuned with `XERO_KEY_STORAGE`, `XERO_KEYRING_FILE_BACKUP`, and `XERO_TOKEN_PASSPHRASE` (see [Token storage](#token-storage)). The `xero login` command additionally accepts `XERO_SCOPES` (see [OAuth scopes](#oauth-scopes) above).
 
@@ -312,7 +316,7 @@ xero manual-journals update --file journal-update.json
 ```json
 {
   "narration": "Reclassify office supplies",
-  "manualJournalLines": [
+  "journalLines": [
     { "accountCode": "200", "lineAmount": 100, "description": "Debit" },
     { "accountCode": "400", "lineAmount": -100, "description": "Credit" }
   ]
@@ -357,7 +361,6 @@ xero payments create --file payment.json
 ```bash
 # List items
 xero items list
-xero items list --page 2
 
 # Create an item
 xero items create --code WIDGET --name "Widget" --sale-price 29.99
@@ -418,7 +421,7 @@ xero reports profit-and-loss --timeframe QUARTER --periods 4
 # Balance sheet
 xero reports balance-sheet
 xero reports balance-sheet --date 2025-12-31
-xero reports balance-sheet --timeframe MONTH --periods 12
+xero reports balance-sheet --timeframe MONTH --periods 11
 
 # Aged receivables (requires contact ID)
 xero reports aged-receivables --contact-id 00000000-0000-0000-0000-000000000001
@@ -431,7 +434,7 @@ xero reports aged-payables --contact-id 00000000-0000-0000-0000-000000000001 --f
 
 ## JSON File Input
 
-Commands that create or update resources accept a `--file` flag with a JSON payload. All inputs are validated before being sent to the API. Validation errors are displayed with specific field-level messages.
+Every command that creates or updates a resource accepts a `--file` flag with a JSON payload, including the tracking category and tracking option commands. Inline flags override matching fields from the file. All inputs are validated before being sent to the API. Validation errors are displayed with specific field-level messages.
 
 ```bash
 xero invoices create --file invoice.json
