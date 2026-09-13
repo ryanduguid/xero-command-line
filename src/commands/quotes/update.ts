@@ -42,6 +42,8 @@ export default class QuotesUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Quote updated: ${r?.quoteNumber} (${r?.quoteID})`)
@@ -92,6 +94,8 @@ export default class QuotesUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Quote updated: ${r?.quoteNumber} (${r?.quoteID})`)

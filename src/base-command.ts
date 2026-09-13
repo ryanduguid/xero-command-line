@@ -77,6 +77,21 @@ export abstract class BaseCommand extends Command {
     this.log(formatOutput(data, columns, format))
   }
 
+  /**
+   * Renders a created or updated resource in the selected machine format.
+   * The human-readable confirmation stays the default, but --csv and --toon
+   * now produce the record instead of being ignored.
+   */
+  protected outputResourceRow(
+    resource: unknown,
+    flags: {csv?: boolean; json?: boolean; toon?: boolean},
+  ): void {
+    const records = (Array.isArray(resource) ? resource : [resource]).filter(
+      (record): record is Record<string, unknown> => Boolean(record) && typeof record === 'object',
+    )
+    const keys = [...new Set(records.flatMap((record) => Object.keys(record)))]
+    this.outputFormatted(records, keys.map((key) => ({header: key, key})), flags)
+  }
   protected async getOrgShortCode(xero: XeroClient, tenantId: string): Promise<string | undefined> {
     try {
       const response = await xero.accountingApi.getOrganisations(tenantId)
@@ -85,6 +100,19 @@ export abstract class BaseCommand extends Command {
     } catch {
       return undefined
     }
+  }
+
+  /**
+   * Reads an optional JSON payload for a create or update command. Inline
+   * flags are merged over the result by the caller.
+   */
+  protected readResourceFile(filePath?: string): Record<string, unknown> {
+    if (!filePath) return {}
+    const data = this.readJsonFile(filePath)
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      this.error(`Validation errors: expected a JSON object in ${filePath}`)
+    }
+    return data as Record<string, unknown>
   }
 
   protected readJsonFile(filePath: string): unknown {

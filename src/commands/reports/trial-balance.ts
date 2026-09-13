@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
-import {formatCurrency} from '../../lib/formatters.js'
+import {extractReportGrid} from '../../lib/report-rows.js'
 
 export default class ReportsTrialBalance extends BaseCommand {
   static override description = 'Generate a trial balance report from Xero'
@@ -14,7 +14,7 @@ export default class ReportsTrialBalance extends BaseCommand {
   static override flags = {
     ...BaseCommand.baseFlags,
     date: Flags.string({description: 'Report date (YYYY-MM-DD)'}),
-    'payments-only': Flags.boolean({description: 'Include only accounts with payments', default: false}),
+    'payments-only': Flags.boolean({description: 'Report on cash transactions only, that is amounts actually paid, rather than the accrual view', default: false}),
   }
 
   async run(): Promise<void> {
@@ -40,40 +40,13 @@ export default class ReportsTrialBalance extends BaseCommand {
       return
     }
 
-    this.log(`\n${report.reportName as string}`)
-    this.log(`${(report.reportDate as string) ?? ''}`)
-    this.log('')
-
-    const rows = this.extractReportRows(report)
-    this.outputFormatted(
-      rows,
-      [
-        {key: 'account', header: 'Account'},
-        {key: 'debit', header: 'Debit', format: (v) => v ? formatCurrency(v) : ''},
-        {key: 'credit', header: 'Credit', format: (v) => v ? formatCurrency(v) : ''},
-      ],
-      {csv: flags.csv},
-    )
-  }
-
-  private extractReportRows(report: Record<string, unknown>): Record<string, unknown>[] {
-    const rows: Record<string, unknown>[] = []
-    const sections = (report.rows ?? []) as Array<Record<string, unknown>>
-
-    for (const section of sections) {
-      const sectionRows = (section.rows ?? []) as Array<Record<string, unknown>>
-      for (const row of sectionRows) {
-        const cells = (row.cells ?? []) as Array<Record<string, unknown>>
-        if (cells.length >= 3) {
-          rows.push({
-            account: cells[0]?.value,
-            debit: cells[1]?.value,
-            credit: cells[2]?.value,
-          })
-        }
-      }
+    if (!flags.csv && !flags.toon) {
+      this.log(`\n${report.reportName as string}`)
+      this.log(`${(report.reportDate as string) ?? ''}`)
+      this.log('')
     }
 
-    return rows
+    const {columns, rows} = extractReportGrid(report)
+    this.outputFormatted(rows, columns, flags)
   }
 }

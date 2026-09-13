@@ -38,6 +38,8 @@ export default class CreditNotesUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Credit note updated: ${r?.creditNoteNumber ?? 'Draft'} (${r?.creditNoteID})`)
@@ -79,6 +81,8 @@ export default class CreditNotesUpdate extends BaseCommand {
 
       if (flags.json) {
         this.log(JSON.stringify(result, null, 2))
+      } else if (flags.csv || flags.toon) {
+        this.outputResourceRow(result, flags)
       } else {
         const r = result as Record<string, unknown> | undefined
         this.log(`Credit note updated: ${r?.creditNoteNumber ?? 'Draft'} (${r?.creditNoteID})`)

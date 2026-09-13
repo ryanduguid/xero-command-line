@@ -90,7 +90,10 @@ export async function getOrCreateKey(): Promise<Buffer> {
 
   const mode = resolveKeyStorageMode()
   const existing = await loadStoredKey(mode)
-  if (existing) return existing
+  if (existing) {
+    ensureFileBackup(existing, mode)
+    return existing
+  }
 
   if (hasEncryptedTokens()) {
     throw new EncryptionKeyError(
@@ -188,6 +191,18 @@ async function persistNewKey(key: Buffer, mode: KeyStorageMode): Promise<void> {
   throw new EncryptionKeyError(
     'Could not store the encryption key. On Linux/WSL install gnome-keyring and libsecret, or set XERO_KEY_STORAGE=file, XERO_KEYRING_FILE_BACKUP=1, or XERO_TOKEN_PASSPHRASE. See README: Token storage.',
   )
+}
+
+/**
+ * Writes the optional file backup for a key that already exists, so turning
+ * the option on after an earlier login still produces a recoverable copy.
+ * A failed write is not fatal: the stored key still works.
+ */
+function ensureFileBackup(key: Buffer, mode: KeyStorageMode): void {
+  if (mode !== 'auto' || !isFileBackupEnabled()) return
+  const backup = readFileKey()
+  if (backup && backup.equals(key)) return
+  writeFileKey(key.toString('base64'))
 }
 
 function readFileKey(): Buffer | null {

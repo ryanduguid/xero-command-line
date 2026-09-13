@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
 import {BaseCommand} from '../../base-command.js'
-import {formatCurrency} from '../../lib/formatters.js'
+import {extractReportGrid} from '../../lib/report-rows.js'
 
 export default class ReportsBalanceSheet extends BaseCommand {
   static override description = 'Generate a balance sheet report from Xero'
@@ -16,7 +16,7 @@ export default class ReportsBalanceSheet extends BaseCommand {
     date: Flags.string({description: 'Report date (YYYY-MM-DD)'}),
     periods: Flags.integer({description: 'Number of periods to compare'}),
     timeframe: Flags.string({description: 'Timeframe', options: ['MONTH', 'QUARTER', 'YEAR']}),
-    'payments-only': Flags.boolean({description: 'Include only accounts with payments', default: false}),
+    'payments-only': Flags.boolean({description: 'Report on cash transactions only, that is amounts actually paid, rather than the accrual view', default: false}),
     'standard-layout': Flags.boolean({description: 'Use standard layout', default: false}),
     'tracking-option-id-1': Flags.string({description: 'Tracking option ID 1'}),
     'tracking-option-id-2': Flags.string({description: 'Tracking option ID 2'}),
@@ -50,40 +50,12 @@ export default class ReportsBalanceSheet extends BaseCommand {
       return
     }
 
-    this.log(`\n${report.reportName as string}`)
-    this.log('')
-
-    const rows = this.extractReportRows(report)
-    this.outputFormatted(
-      rows,
-      [
-        {key: 'account', header: 'Account'},
-        {key: 'amount', header: 'Amount', format: (v) => v ? formatCurrency(v) : ''},
-      ],
-      {csv: flags.csv},
-    )
-  }
-
-  private extractReportRows(report: Record<string, unknown>): Record<string, unknown>[] {
-    const rows: Record<string, unknown>[] = []
-    const sections = (report.rows ?? []) as Array<Record<string, unknown>>
-
-    for (const section of sections) {
-      if (section.title) {
-        rows.push({account: `--- ${section.title} ---`, amount: ''})
-      }
-      const sectionRows = (section.rows ?? []) as Array<Record<string, unknown>>
-      for (const row of sectionRows) {
-        const cells = (row.cells ?? []) as Array<Record<string, unknown>>
-        if (cells.length >= 2) {
-          rows.push({
-            account: cells[0]?.value,
-            amount: cells[1]?.value,
-          })
-        }
-      }
+    if (!flags.csv && !flags.toon) {
+      this.log(`\n${report.reportName as string}`)
+      this.log('')
     }
 
-    return rows
+    const {columns, rows} = extractReportGrid(report, {sectionTitles: true})
+    this.outputFormatted(rows, columns, flags)
   }
 }
