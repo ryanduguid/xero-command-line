@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    # Node 22.0.0's PowerShell npm launcher assumes a global npm installation.
+    shell: bash
+
 jobs:
   build-and-test:
     runs-on: ${{ matrix.os }}
