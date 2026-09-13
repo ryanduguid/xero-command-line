@@ -51,6 +51,16 @@ describe('formatOutput', () => {
     expect(result).toContain('Alice')
     expect(result).toContain('Bob')
   })
+
+  it('preserves prototype-named data keys in TOON output', () => {
+    const rows = JSON.parse('[{"__proto__":{"reference":"kept"},"constructor":"ordinary","amount":12}]')
+    const result = formatOutput(rows, [], 'toon')
+    expect(result).toContain('__proto__')
+    expect(result).toContain('reference: kept')
+    expect(result).toContain('constructor: ordinary')
+    expect(result).toContain('amount: 12')
+    expect(Object.hasOwn(Object.prototype, 'reference')).toBe(false)
+  })
 })
 
 describe('formatCurrency', () => {
