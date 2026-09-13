@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # Node 22.0.0's PowerShell npm launcher assumes a global npm installation.
+    shell: bash
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ["22.0.0", "22", "24"]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dependencies
+        run: npm ci --engine-strict
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm test
+      - name: Check CLI startup
+        run: node bin/run.js --help
