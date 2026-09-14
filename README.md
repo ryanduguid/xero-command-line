@@ -21,7 +21,7 @@ npx @xeroapi/xero-command-line <command>
 ### From source
 
 ```bash
-git clone https://github.com/XeroAPI/xero-command-line.git
+git clone https://github.com/ryanduguid/xero-command-line.git
 cd xero-command-line
 npm install
 npm run build
