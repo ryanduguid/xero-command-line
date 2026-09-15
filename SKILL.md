@@ -140,7 +140,7 @@ xero items list                       # find item codes
 
 ## JSON file input
 
-Any create or update command accepts `--file <path.json>` instead of inline flags, including the tracking category and tracking option commands. Inline flags override matching fields from the file. Use a file for multi-line-item resources. All inputs are validated before being sent to the API.
+Any create or update command accepts `--file <path.json>` instead of inline flags, including the tracking category and tracking option commands. File and flag precedence depends on the command. Tracking category and option commands merge supported inline overrides. `contacts create --file` uses the file payload and ignores `--name`, `--email` and `--phone`; put those values in the file. Check the individual command before combining a file with inline resource fields. Use a file for multi-line-item resources. All inputs are validated before being sent to the API.
 
 ```bash
 xero invoices create --file invoice.json
