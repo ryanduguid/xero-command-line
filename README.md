@@ -94,6 +94,8 @@ In `auto` mode without file backup, if the keychain is completely unavailable at
 
 On Linux, WSL, or SSH, if login works once and later commands fail with an encryption-key error, the secret service was likely unavailable in that shell. The CLI does **not** delete `tokens.json` on decrypt errors.
 
+**Cache integrity.** Writes to `tokens.json` are atomic (written to a temp file, then renamed into place) and serialised across processes with a short-lived `tokens.json.lock` directory, so parallel commands, scripts, and background token refreshes cannot overwrite each other's profiles. Before every write the previous version is copied to `tokens.json.bak` (mode `0600`). If the CLI reports that the token cache is **corrupted**, that is not token expiry: the file exists but could not be parsed. Restore `tokens.json.bak` over `tokens.json`, or move `tokens.json` aside and run `xero login` for each profile. The CLI never replaces a corrupt cache on its own.
+
 **WSL / headless Linux (recommended: fix the keychain):**
 
 ```bash
@@ -231,6 +233,17 @@ xero invoices list --contact-id 00000000-0000-0000-0000-000000000001
 xero invoices list --invoice-number INV-0001
 xero invoices list --page 2 --csv
 
+# Download an invoice PDF to a file
+xero invoices pdf --invoice-id 00000000-0000-0000-0000-000000000001 --output invoice.pdf
+xero invoices pdf --invoice-id 00000000-0000-0000-0000-000000000001 --output invoice.pdf --json
+
+# Stream an invoice PDF to stdout
+xero invoices pdf --invoice-id 00000000-0000-0000-0000-000000000001 --output - > invoice.pdf
+
+# Retrieve the customer-facing online invoice URL
+xero invoices online-url --invoice-id 00000000-0000-0000-0000-000000000001
+xero invoices online-url --invoice-id 00000000-0000-0000-0000-000000000001 --json
+
 # Create an invoice (inline flags for a single line item)
 xero invoices create --contact-id 00000000-0000-0000-0000-000000000001 --type ACCREC \
   --description "Consulting" --quantity 10 --unit-amount 150 \
@@ -243,6 +256,10 @@ xero invoices create --file invoice.json
 xero invoices update --invoice-id 00000000-0000-0000-0000-000000000001 --reference "Updated ref"
 xero invoices update --file invoice-update.json
 ```
+
+`invoices pdf` requires both `--invoice-id` and `-o, --output`. Parent directories are created automatically. Use `--output -` only when redirecting or piping stdout; binary PDF output cannot be combined with `--json`, `--csv`, or `--toon` and is refused when stdout is an interactive terminal. File output supports all structured output flags and reports the saved path, content type, and byte count.
+
+`invoices online-url` calls Xero's dedicated `GET /Invoices/{InvoiceID}/OnlineInvoice` endpoint. Xero provides online invoice URLs only for non-draft `ACCREC` sales invoices. The command does not reuse the invoice `url` field returned by `invoices list`, which is a source-document link rather than the customer-facing online invoice URL. If Xero has not made an online URL available, the command exits successfully with a clear message; structured output returns `available: false`.
 
 <details>
 <summary>Example invoice.json</summary>
