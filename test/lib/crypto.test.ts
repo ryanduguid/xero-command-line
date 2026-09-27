@@ -119,9 +119,13 @@ describe('crypto key storage', () => {
     expect(Entry.store).toBeNull()
   })
 
-  it('treats an empty token cache file as no tokens', () => {
+  it('treats an empty token cache file as possible tokens rather than minting a new key', async () => {
     writeFileSync(TOKEN_PATH, '', {mode: 0o600})
-    expect(hasEncryptedTokens()).toBe(false)
+    expect(hasEncryptedTokens()).toBe(true)
+    const {Entry} = await import('@napi-rs/keyring')
+    Entry.store = null
+    await expect(getOrCreateKey()).rejects.toBeInstanceOf(EncryptionKeyError)
+    expect(Entry.store).toBeNull()
   })
 
   it('derives a stable key from XERO_TOKEN_PASSPHRASE', async () => {
