@@ -10,7 +10,7 @@ A command-line tool for the Xero API using PKCE OAuth. Authenticates via browser
 npm install -g @xeroapi/xero-command-line
 ```
 
-`@xeroapi/xero-command-line` on npm is the upstream release (0.0.7). It does not carry the changes in this fork. In the published 0.0.7, `--standard-layout` selects cash transactions and `--payments-only` selects the standard layout in both the balance sheet and the profit and loss, and the stricter key storage fallback and OAuth error handling are absent. To get the corrected behaviour, install from source (below) rather than from npm.
+`@xeroapi/xero-command-line` on npm is the upstream release (0.0.8, published 17 September 2026). It carries the corrected `--standard-layout` and `--payments-only` flags and atomic, locked token-cache writes, which this fork also has. It does not carry this fork's stricter key storage fallback or OAuth error handling; for those, install from source (below) rather than from npm.
 
 Or try it without installing:
 
@@ -77,6 +77,8 @@ The CLI encrypts OAuth tokens at rest in `~/.config/xero-command-line/tokens.jso
 In `auto` mode without file backup, login fails if the keychain cannot store a new key. Before logging in without a working keychain, set `XERO_KEY_STORAGE=file`, enable file backup in `auto` mode, or configure `XERO_TOKEN_PASSPHRASE`. `keyring` mode requires a working keychain.
 
 On Linux, WSL, or SSH, if login works once and later commands fail with an encryption-key error, the secret service was likely unavailable in that shell. The CLI does **not** delete `tokens.json` on decrypt errors.
+
+**Cache integrity.** Writes to `tokens.json` are atomic (written to a temp file, then renamed into place) and serialised across processes with a short-lived `tokens.json.lock` directory, so parallel commands, scripts, and background token refreshes cannot overwrite each other's profiles. Before every write the previous version is copied to `tokens.json.bak` (mode `0600`). If the CLI reports that the token cache is **corrupted**, that is not token expiry: the file exists but could not be parsed. Restore `tokens.json.bak` over `tokens.json`, or move `tokens.json` aside and run `xero login` for each profile. The CLI never replaces a corrupt cache on its own.
 
 **WSL / headless Linux (recommended: fix the keychain):**
 

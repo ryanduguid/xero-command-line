@@ -1,15 +1,17 @@
 import {XeroClient} from 'xero-node'
-import {getCachedTokenSet, cacheTokenSet, clearCachedToken, isTokenExpired} from './auth.js'
+import {getCachedTokenSet, cacheTokenSet, clearCachedToken, isTokenExpired, TokenCacheError} from './auth.js'
 import {EncryptionKeyError} from './crypto.js'
 import {refreshAccessToken} from './oauth.js'
 import {getClientHeaders} from './get-client-headers.js'
 
 export {clearCachedToken}
 
-function reportRefreshFailure(profileName: string, error: unknown): never {
-  if (error instanceof EncryptionKeyError) throw error
+// A corrupt cache (TokenCacheError) is not an expired session: clearing the
+// profile would write the corrupt read back over every other stored login.
+async function reportRefreshFailure(profileName: string, error: unknown): Promise<never> {
+  if (error instanceof EncryptionKeyError || error instanceof TokenCacheError) throw error
   if (error instanceof Error && 'invalidRefreshToken' in error && error.invalidRefreshToken === true) {
-    clearCachedToken(profileName)
+    await clearCachedToken(profileName)
     throw new Error('Session expired. Run "xero login" to re-authenticate.')
   }
   throw sanitizeApiError(error instanceof Error ? error : new Error(String(error)))
@@ -34,7 +36,7 @@ export async function createXeroClient(
       await cacheTokenSet(profileName, newTokenSet, cached.tenantId, cached.tenantName)
       accessToken = newTokenSet.access_token
     } catch (error) {
-      reportRefreshFailure(profileName, error)
+      await reportRefreshFailure(profileName, error)
     }
   }
 
@@ -64,6 +66,7 @@ export async function withRetry<T>(
       return await operation(xero, tenantId)
     } catch (error) {
       if (error instanceof EncryptionKeyError) throw error
+      if (error instanceof TokenCacheError) throw error
       lastError = error instanceof Error ? error : new Error(String(error))
 
       const {statusCode, parsed} = parseXeroError(lastError)
@@ -77,10 +80,10 @@ export async function withRetry<T>(
             await cacheTokenSet(profileName, newTokenSet, cached.tenantId, cached.tenantName)
             continue
           } catch (error) {
-            reportRefreshFailure(profileName, error)
+            await reportRefreshFailure(profileName, error)
           }
         }
-        clearCachedToken(profileName)
+        await clearCachedToken(profileName)
         continue
       }
 

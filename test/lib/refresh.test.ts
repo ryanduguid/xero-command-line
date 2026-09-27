@@ -6,6 +6,7 @@ import {clearCachedToken} from '../../src/lib/auth.js'
 vi.mock('../../src/lib/auth.js', () => ({
   getCachedTokenSet: vi.fn(async () => ({accessToken: 'synthetic', refreshToken: 'synthetic', tenantId: 'synthetic'})),
   cacheTokenSet: vi.fn(), clearCachedToken: vi.fn(), isTokenExpired: () => true,
+  TokenCacheError: class TokenCacheError extends Error {},
 }))
 beforeEach(() => vi.clearAllMocks())
 afterEach(() => vi.unstubAllGlobals())
