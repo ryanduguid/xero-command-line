@@ -70,11 +70,23 @@ export function isFileBackupEnabled(): boolean {
 export function hasEncryptedTokens(): boolean {
   const tokenPath = join(CONFIG_DIR, 'tokens.json')
   if (!existsSync(tokenPath)) return false
+  let raw: string
   try {
-    const cache = JSON.parse(readFileSync(tokenPath, 'utf-8')) as Record<string, unknown>
+    raw = readFileSync(tokenPath, 'utf-8')
+  } catch {
+    // Unreadable but present: assume tokens exist so we never mint a new key over the old one.
+    return true
+  }
+  // Empty but present: the auth reader calls this corrupted and points at the backup,
+  // whose tokens a freshly minted key could never decrypt.
+  if (raw.trim().length === 0) return true
+  try {
+    const cache = JSON.parse(raw) as Record<string, unknown>
     return Object.keys(cache).length > 0
   } catch {
-    return false
+    // Corrupt but non-empty: treat as "tokens exist". Generating a fresh key here would
+    // make the cache permanently undecryptable even after the file is repaired.
+    return true
   }
 }
 
@@ -97,7 +109,7 @@ export async function getOrCreateKey(): Promise<Buffer> {
 
   if (hasEncryptedTokens()) {
     throw new EncryptionKeyError(
-      'Could not read the encryption key for cached tokens. On Linux/WSL/SSH this usually means the secret service (e.g. GNOME Keyring) is unavailable in this session. Install and start gnome-keyring, set XERO_KEYRING_FILE_BACKUP=1 (if the keychain is flaky), XERO_KEY_STORAGE=file, or XERO_TOKEN_PASSPHRASE and run "xero login" again. See README: Token storage.',
+      'Could not read the encryption key for cached tokens. On Linux/WSL/SSH this usually means the secret service (e.g. GNOME Keyring) is unavailable in this session. Install and start gnome-keyring, set XERO_KEYRING_FILE_BACKUP=1 (if the keychain is flaky), XERO_KEY_STORAGE=file, or XERO_TOKEN_PASSPHRASE and run "xero login" again. If the key is lost, or tokens.json is empty or damaged, move tokens.json aside first. See README: Token storage.',
     )
   }
 
