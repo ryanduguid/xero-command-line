@@ -95,6 +95,7 @@ function renameWithRetry(from: string, to: string): void {
 export async function withFileLock<T>(lockPath: string, fn: () => T | Promise<T>): Promise<T> {
   const token = `${process.pid} ${randomBytes(8).toString('hex')}`
   const start = Date.now()
+  let lockSeen = false
 
   for (;;) {
     try {
@@ -104,9 +105,14 @@ export async function withFileLock<T>(lockPath: string, fn: () => T | Promise<T>
       const code = errorCode(error)
       // Windows answers EPERM, not EEXIST, while a released lock is still being deleted.
       if (code !== 'EEXIST' && !(code === 'EPERM' && process.platform === 'win32')) throw error
-      if (code === 'EEXIST' && reclaimAbandonedLock(lockPath)) continue
+      if (code === 'EEXIST') {
+        lockSeen = true
+        if (reclaimAbandonedLock(lockPath)) continue
+      }
 
       if (Date.now() - start > LOCK_TIMEOUT_MS) {
+        // An EPERM that never turned into a visible lock is a real permission failure.
+        if (!lockSeen) throw error
         throw new FileLockError(
           `Timed out waiting for lock ${lockPath}. If no other xero process is running, remove it and retry.`,
         )

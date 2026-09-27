@@ -5,15 +5,19 @@ import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {FileLockError, withFileLock, writeFileAtomic} from '../../src/lib/atomic-file.js'
 
-const fsync = vi.hoisted(() => ({fail: false}))
+const hooks = vi.hoisted(() => ({fsyncFails: false, mkdirCode: ''}))
 
 vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
   return {
     ...actual,
     fsyncSync(fd: number) {
-      if (fsync.fail) throw Object.assign(new Error('EIO: i/o error, fsync'), {code: 'EIO'})
+      if (hooks.fsyncFails) throw Object.assign(new Error('EIO: i/o error, fsync'), {code: 'EIO'})
       actual.fsyncSync(fd)
+    },
+    mkdirSync(...args: Parameters<typeof actual.mkdirSync>) {
+      if (hooks.mkdirCode) throw Object.assign(new Error(`${hooks.mkdirCode}: mkdir failed`), {code: hooks.mkdirCode})
+      return actual.mkdirSync(...args)
     },
   }
 })
@@ -27,7 +31,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  fsync.fail = false
+  hooks.fsyncFails = false
+  hooks.mkdirCode = ''
   vi.useRealTimers()
   rmSync(dir, {recursive: true, force: true})
 })
@@ -44,7 +49,7 @@ describe('writeFileAtomic', () => {
   it('removes its temp file and leaves the target alone when a write step fails', () => {
     const target = join(dir, 'tokens.json')
     writeFileSync(target, 'old')
-    fsync.fail = true
+    hooks.fsyncFails = true
     expect(() => writeFileAtomic(target, 'new')).toThrow('EIO')
     expect(readFileSync(target, 'utf-8')).toBe('old')
     expect(readdirSync(dir)).toEqual(['tokens.json'])
@@ -72,6 +77,20 @@ describe('withFileLock', () => {
     await vi.advanceTimersByTimeAsync(11_000)
     await attempt
     expect(readFileSync(join(lock, 'owner'), 'utf-8')).toBe(`${process.pid} 0123456789abcdef`)
+  })
+
+  it('surfaces a Windows permission failure that never showed a lock', async () => {
+    vi.useFakeTimers({toFake: ['setTimeout', 'Date']})
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
+    Object.defineProperty(process, 'platform', {...platform, value: 'win32'})
+    hooks.mkdirCode = 'EPERM'
+    try {
+      const attempt = expect(withFileLock(lock, () => 'ran')).rejects.toMatchObject({code: 'EPERM'})
+      await vi.advanceTimersByTimeAsync(11_000)
+      await attempt
+    } finally {
+      Object.defineProperty(process, 'platform', platform)
+    }
   })
 
   it('does not remove a lock that no longer carries its token', async () => {
