@@ -9,6 +9,16 @@ A command-line tool for the Xero API using PKCE OAuth. Authenticates via browser
 
 > **Alpha** (v0.0.7) — APIs may change.
 
+On this page:
+
+- [Install](#install)
+- [Setup](#setup)
+- [Finding IDs](#finding-ids)
+- [Commands](#commands)
+- [JSON File Input](#json-file-input)
+- [Output Formats](#output-formats)
+- [Development](#development)
+
 ## Install
 
 ```bash
