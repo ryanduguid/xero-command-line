@@ -1,0 +1,50 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      vite-toolchain:
+        applies-to: security-updates
+        patterns:
+          - esbuild
+          - "@esbuild/*"
+          - vite
+          - vitest
+          - "@vitest/*"
+          - postcss
+      other-npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - esbuild
+          - "@esbuild/*"
+          - vite
+          - vitest
+          - "@vitest/*"
+          - postcss
+      vite-toolchain-versions:
+        applies-to: version-updates
+        patterns:
+          - esbuild
+          - "@esbuild/*"
+          - vite
+          - vitest
+          - "@vitest/*"
+          - postcss
+      other-npm-versions:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        exclude-patterns:
+          - esbuild
+          - "@esbuild/*"
+          - vite
+          - vitest
+          - "@vitest/*"
+          - postcss
+        update-types:
+          - minor
+          - patch
