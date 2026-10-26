@@ -1,12 +1,12 @@
 {
   "name": "@xeroapi/xero-command-line",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "CLI tool for Xero API access via PKCE OAuth",
   "license": "MIT",
   "author": "Regan Ashworth",
   "repository": {
     "type": "git",
-    "url": "https://github.com/XeroAPI/xero-command-line.git"
+    "url": "git+https://github.com/XeroAPI/xero-command-line.git"
   },
   "homepage": "https://github.com/XeroAPI/xero-command-line#readme",
   "bugs": {
@@ -22,7 +22,7 @@
   ],
   "type": "module",
   "bin": {
-    "xero": "./bin/run.js"
+    "xero": "bin/run.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -32,6 +32,8 @@
   ],
   "scripts": {
     "build": "tsc -b",
+    "build:binary": "bun build --compile --minify bin/bun-run.ts --outfile xero",
+    "build:binary:linux": "bun build --compile --minify --target=bun-linux-x64 bin/bun-run.ts --outfile xero-linux",
     "dev": "node --loader ts-node/esm bin/dev.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -97,6 +99,27 @@
       },
       "org": {
         "description": "View organisation details"
+      },
+      "invoices:attachments": {
+        "description": "Manage invoice attachments"
+      },
+      "credit-notes:attachments": {
+        "description": "Manage credit note attachments"
+      },
+      "bank-transactions:attachments": {
+        "description": "Manage bank transaction attachments"
+      },
+      "quotes:attachments": {
+        "description": "Manage quote attachments"
+      },
+      "contacts:attachments": {
+        "description": "Manage contact attachments"
+      },
+      "accounts:attachments": {
+        "description": "Manage account attachments"
+      },
+      "manual-journals:attachments": {
+        "description": "Manage manual journal attachments"
       }
     },
     "plugins": [
