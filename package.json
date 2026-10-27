@@ -136,7 +136,7 @@
     "cli-table3": "^0.6",
     "open": "^11.0.0",
     "xero-node": "^13",
-    "zod": "^3"
+    "zod": "^4"
   },
   "devDependencies": {
     "@oclif/test": "^4",
