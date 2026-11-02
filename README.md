@@ -4,9 +4,11 @@
 
 **Fork status**
 
-[![Fork code quality](https://app.codacy.com/project/badge/Grade/c921dba5fd6c4df7b0483cc2a2da7425?branch=main)](https://app.codacy.com/gh/ryanduguid/xero-command-line/dashboard) [![Fork CI](https://github.com/ryanduguid/xero-command-line/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ryanduguid/xero-command-line/actions/workflows/ci.yml)
+[![Fork code quality](https://app.codacy.com/project/badge/Grade/c921dba5fd6c4df7b0483cc2a2da7425?branch=main)](https://app.codacy.com/gh/ryanduguid/xero-command-line/dashboard)
 
 </div>
+
+GitHub Actions is off for this fork, so `ci.yml` does not run on GitHub. Run its steps locally before merging.
 
 A command-line tool for the Xero API using PKCE OAuth. Authenticates via browser-based login — no client secret required. Supports multiple Xero organisations via named profiles.
 
