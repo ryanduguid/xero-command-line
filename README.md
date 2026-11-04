@@ -8,6 +8,8 @@
 
 </div>
 
+ryanduguid/xero-command-line is [Ryan Duguid](https://duguid.com.au/)'s distribution fork of [XeroAPI/xero-command-line](https://github.com/XeroAPI/xero-command-line), adding stricter key storage fallback, OAuth error handling and report output fixes for Xero CLI users who install from source.
+
 GitHub Actions is off for this fork, so `ci.yml` does not run on GitHub. Run its steps locally before merging.
 
 A command-line tool for the Xero API using PKCE OAuth. Authenticates via browser-based login — no client secret required. Supports multiple Xero organisations via named profiles.
